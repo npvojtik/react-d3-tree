@@ -3,8 +3,8 @@ import { HierarchyPointNode } from 'd3-hierarchy';
 import { select } from 'd3-selection';
 
 import { Orientation, Point, TreeNodeDatum, RenderCustomNodeElementFn } from '../types/common';
+import DefaultNodeElement, { DefaultNodeElementProps } from './DefaultNodeElement';
 import './style.css';
-import DefaultNodeElement from './DefaultNodeElement';
 
 type NodeEventHandler = (id: string, evt: SyntheticEvent) => void;
 
@@ -21,9 +21,10 @@ type NodeProps = {
   enableLegacyTransitions: boolean;
   transitionDuration: number;
   renderCustomNodeElement: RenderCustomNodeElementFn;
-  onClick: NodeEventHandler;
-  onMouseOver: NodeEventHandler;
-  onMouseOut: NodeEventHandler;
+  onNodeToggle: (nodeId: string) => void;
+  onNodeClick: NodeEventHandler;
+  onNodeMouseOver: NodeEventHandler;
+  onNodeMouseOut: NodeEventHandler;
   subscriptions: object;
 };
 
@@ -34,7 +35,7 @@ type NodeState = {
 
 export default class Node extends React.Component<NodeProps, NodeState> {
   static defaultProps = {
-    renderCustomNodeElement: (nodeDatum: TreeNodeDatum) => DefaultNodeElement({ nodeDatum }),
+    renderCustomNodeElement: (props: DefaultNodeElementProps) => DefaultNodeElement(props),
   };
 
   private nodeRef: SVGGElement = null;
@@ -116,16 +117,18 @@ export default class Node extends React.Component<NodeProps, NodeState> {
     this.applyTransform(transform, transitionDuration);
   }
 
+  handleNodeToggle = () => this.props.onNodeToggle(this.props.data.__rd3t.id);
+
   handleOnClick = evt => {
-    this.props.onClick(this.props.data.__rd3t.id, evt);
+    this.props.onNodeClick(this.props.data.__rd3t.id, evt);
   };
 
   handleOnMouseOver = evt => {
-    this.props.onMouseOver(this.props.data.__rd3t.id, evt);
+    this.props.onNodeMouseOver(this.props.data.__rd3t.id, evt);
   };
 
   handleOnMouseOut = evt => {
-    this.props.onMouseOut(this.props.data.__rd3t.id, evt);
+    this.props.onNodeMouseOut(this.props.data.__rd3t.id, evt);
   };
 
   componentWillLeave(done) {
@@ -145,11 +148,16 @@ export default class Node extends React.Component<NodeProps, NodeState> {
         style={this.state.initialStyle}
         className={[data.children ? 'rd3t-node' : 'rd3t-leaf-node', nodeClassName].join(' ').trim()}
         transform={this.state.transform}
-        onClick={this.handleOnClick}
-        onMouseOver={this.handleOnMouseOver}
-        onMouseOut={this.handleOnMouseOut}
       >
-        {renderCustomNodeElement(data)}
+        {renderCustomNodeElement({
+          data,
+          toggleNode: this.handleNodeToggle,
+          // TODO: fix union typing for DefaultNodeElementProps
+          // @ts-ignore
+          onNodeClick: this.handleOnClick,
+          onNodeMouseOver: this.handleOnMouseOver,
+          onNodeMouseOut: this.handleOnMouseOut,
+        })}
       </g>
     );
   }

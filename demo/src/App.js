@@ -1,33 +1,32 @@
 import React, { Component } from 'react';
 import clone from 'clone';
-import { treeData, treeData2, mockFlatArray, debugData, individualShapesData } from './mockData';
+import { treeData, debugData, individualShapesData } from './mockData';
 import Tree from 'react-d3-tree';
 import { version } from 'react-d3-tree/package.json';
 import Switch from './components/Switch';
-import './App.css';
-import reactTree from './directory-trees/react-tree';
-import scTree from './directory-trees/sc-tree';
-import ForeignObjectNodeComponent from './components/ForeignObjectNodeComponent';
+import MixedNodeElement from './components/MixedNodeElement';
 import DefaultNodeElement from './components/DefaultNodeElement';
+import './App.css';
+
+// Data examples
+import reactTree from './examples/react-tree';
+import flareJson from './examples/d3-hierarchy-flare.json';
 
 console.log('Demo React version: ', React.version);
 
 const customNodeFnMapping = {
-  default: {
-    description: 'Default - SVG `circle`, no label',
-    fn: () => <circle r={20}></circle>,
-  },
   svg: {
-    description: 'Pure SVG node & label (IE11 compatible)',
-    fn: (nodeDatum, appState) => (
+    description: 'Default - Pure SVG node & label (IE11 compatible)',
+    fn: (nodeDatum, _, appState) => (
       <DefaultNodeElement nodeDatum={nodeDatum} orientation={appState.orientation} />
     ),
   },
   mixed: {
     description: 'Mixed - SVG `circle` + `foreignObject` label',
-    fn: (nodeDatum, appState) => (
-      <ForeignObjectNodeComponent
+    fn: (nodeDatum, triggerNodeToggle, appState) => (
+      <MixedNodeElement
         nodeData={nodeDatum}
+        triggerNodeToggle={triggerNodeToggle}
         foreignObjectProps={{
           width: appState.nodeSize.x,
           height: appState.nodeSize.y,
@@ -87,10 +86,6 @@ class App extends Component {
 
     this.setTreeData = this.setTreeData.bind(this);
     this.setLargeTree = this.setLargeTree.bind(this);
-    // this.setTreeDataFromCSV = this.setTreeDataFromCSV.bind(this);
-    // this.setTreeDataFromJSON = this.setTreeDataFromJSON.bind(this);
-    // this.setTreeDataFromFlatJSON = this.setTreeDataFromFlatJSON.bind(this);
-    // this.setTreeDataFromFlatArray = this.setTreeDataFromFlatArray.bind(this);
     this.setOrientation = this.setOrientation.bind(this);
     this.setPathFunc = this.setPathFunc.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -112,42 +107,6 @@ class App extends Component {
       transitionDuration: 0,
     });
   }
-
-  // setTreeDataFromCSV(csvFile, attributeFields) {
-  //   treeUtil
-  //     .parseCSV(csvFile, attributeFields)
-  //     .then(data => {
-  //       console.log(data);
-  //       this.setState({ data });
-  //     })
-  //     .catch(err => console.error(err));
-  // }
-
-  // setTreeDataFromJSON(jsonFile) {
-  //   treeUtil
-  //     .parseJSON(jsonFile)
-  //     .then(data => {
-  //       console.log(data);
-  //       this.setState({ data });
-  //     })
-  //     .catch(err => console.error(err));
-  // }
-
-  // setTreeDataFromFlatJSON(jsonFile, attributeFields) {
-  //   treeUtil
-  //     .parseFlatJSON(jsonFile, attributeFields)
-  //     .then(data => {
-  //       console.log(data);
-  //       this.setState({ data });
-  //     })
-  //     .catch(err => console.error(err));
-  // }
-
-  // setTreeDataFromFlatArray(flatArray) {
-  //   const data = treeUtil.generateHierarchy(flatArray);
-  //   console.log(data);
-  //   this.setState({ data });
-  // }
 
   setOrientation(orientation) {
     this.setState({ orientation });
@@ -282,49 +241,24 @@ class App extends Component {
                   <button
                     type="button"
                     className="btn btn-controls btn-block"
-                    onClick={() => this.setTreeData(treeData2)}
+                    onClick={() => this.setTreeData(flareJson)}
                   >
-                    Simple B
+                    d3-hierarchy - flare.json (medium)
                   </button>
                   <button
                     type="button"
                     className="btn btn-controls btn-block"
-                    onClick={() => this.setTreeData(individualShapesData)}
+                    onClick={() => this.setTreeData(reactTree)}
                   >
-                    Individual Node Shapes
-                  </button>
-                  <button
-                    disabled
-                    type="button"
-                    className="btn btn-controls btn-block"
-                    onClick={() => this.setTreeDataFromFlatArray(mockFlatArray)}
-                  >
-                    From Flat Array
+                    React repository (large)
                   </button>
                 </div>
               </div>
 
               <div className="prop-container">
-                <span className="prop">Large Trees</span>
-                <span className="prop">(animations off for performance)</span>
-                <button
-                  type="button"
-                  className="btn btn-controls btn-block"
-                  onClick={() => this.setLargeTree(reactTree)}
-                >
-                  React Repo
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-controls btn-block"
-                  onClick={() => this.setLargeTree(scTree)}
-                >
-                  Styled Components Repo
-                </button>
-              </div>
-
-              <div className="prop-container">
-                <span className="prop">Mutating loaded data</span>
+                <span className="prop">
+                  Dynamically updating <code>data</code>
+                </span>
                 <button
                   type="button"
                   className="btn btn-controls btn-block"
@@ -339,38 +273,6 @@ class App extends Component {
                 >
                   Remove Node
                 </button>
-              </div>
-
-              <div className="prop-container">
-                <span className="prop">Data parsed from static source</span>
-                <div>
-                  <button
-                    disabled
-                    type="button"
-                    className="btn btn-controls btn-block"
-                    onClick={() =>
-                      this.setTreeDataFromCSV('csv-example.csv', [
-                        'CSV Attribute A',
-                        'CSV Attribute B',
-                      ])
-                    }
-                  >
-                    From CSV File
-                  </button>
-                  <button
-                    disabled
-                    type="button"
-                    className="btn btn-controls btn-block"
-                    onClick={() =>
-                      this.setTreeDataFromFlatJSON('flat-json-example.json', [
-                        'FlatJSON Attribute A',
-                        'FlatJSON Attribute B',
-                      ])
-                    }
-                  >
-                    From Flat JSON File
-                  </button>
-                </div>
               </div>
 
               <div className="prop-container">
@@ -424,6 +326,19 @@ class App extends Component {
               </div>
 
               <div className="prop-container">
+                <label className="prop" htmlFor="customNodeElement">
+                  Custom Node Element
+                </label>
+                <select className="form-control" onChange={this.handleCustomNodeFnChange}>
+                  {Object.entries(customNodeFnMapping).map(([key, { description }]) => (
+                    <option key={key} value={key}>
+                      {description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="prop-container">
                 <span className="prop">Collapsible</span>
                 <Switch
                   name="collapsibleBtn"
@@ -452,22 +367,6 @@ class App extends Component {
                     }))
                   }
                 />
-              </div>
-
-              <div className="prop-container">
-                <label className="prop" htmlFor="customNodeElement">
-                  Custom Node Element
-                </label>
-                <select className="form-control" onChange={this.handleCustomNodeFnChange}>
-                  {Object.entries(customNodeFnMapping).map(([key, { description }]) => (
-                    <option key={key} value={key}>
-                      {description}
-                    </option>
-                  ))}
-                  {/* <option value="default">Default</option>
-                  <option value="svg">{'Pure SVG (IE11 compatible)'}</option>
-                  <option value="mixed">{'Mixed - SVG `circle` + `foreignObject` label'}</option> */}
-                </select>
               </div>
 
               <div className="prop-container">
@@ -654,9 +553,9 @@ class App extends Component {
             <div ref={tc => (this.treeContainer = tc)} className="tree-container">
               <Tree
                 data={this.state.data}
-                renderCustomNodeElement={nodeDatum =>
-                  this.state.renderCustomNodeElement(nodeDatum, this.state)
-                }
+                // renderCustomNodeElement={(nodeDatum, triggerNodeToggle) =>
+                //   this.state.renderCustomNodeElement(nodeDatum, triggerNodeToggle, this.state)
+                // }
                 orientation={this.state.orientation}
                 translate={{ x: this.state.translateX, y: this.state.translateY }}
                 pathFunc={this.state.pathFunc}
@@ -674,9 +573,15 @@ class App extends Component {
                 styles={this.state.styles}
                 shouldCollapseNeighborNodes={this.state.shouldCollapseNeighborNodes}
                 // onUpdate={(...args) => {console.log(args)}}
-                onClick={(...args) => {
+                onNodeClick={(...args) => {
                   console.log('onClick');
                   console.log(args);
+                }}
+                onNodeMouseOver={(...args) => {
+                  console.log('onMouseOver', args);
+                }}
+                onNodeMouseOut={(...args) => {
+                  console.log('onMouseOut', args);
                 }}
                 onLinkClick={(...args) => {
                   console.log('onLinkClick');
